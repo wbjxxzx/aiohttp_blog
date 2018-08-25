@@ -154,8 +154,8 @@ class Model(dict, metaclass=ModelMetaclass):
     def get_value(self, key):
         return getattr(self, key, None)
 
-    def get_value_of_default(self, key):
-        val = self.get_value(self, key)
+    def get_value_or_default(self, key):
+        val = getattr(self, key, None)
         if val is None:
             field = self.__mappings__[key]
             if field.default is not None:
@@ -190,4 +190,43 @@ class Model(dict, metaclass=ModelMetaclass):
                 raise ValueError('Invalid limit value: {}'.format(limit))
         rs = await select(' '.join(sql), args)
         return [cls(**r) for r in rs]
-        
+    
+    @classmethod
+    async def find_number(cls, selectField, where=None, args=None):
+        """ find number by select and where"""
+        sql = ['select {} _num_ from `{}`'.format(selectField, cls.__table__)]
+        if where:
+            sql.append('where')
+            sql.append(where)
+        rs = await select(' '.join(sql), args, 1)
+        if len(rs) == 0:
+            return None
+        return rs[0]['_num_']
+
+    @classmethod
+    async def find(cls, pk):
+        """ find object by primary key"""
+        rs = await select('{} where `{}`=?'.format(cls.__select__, cls.__primary_key__), [pk], 1)
+        if len(rs) == 0:
+            return None
+        return cls(**rs[0])
+
+    async def save(self):
+        args = list(map(self.get_value_or_default, self.__fields__))
+        args.append(self.get_value_or_default(self.__primary_key__))
+        rows = await execute(self.__insert__, args)
+        if rows != 1:
+            logging.warning('failed insert record: affected rows: {}'.format(row))
+
+    async def update(self):
+        args = list(map(self.get_value, self.__fields__))
+        args.append(self.get_value(self.__primary_key__))
+        rows = await execute(self.__update__, args)
+        if rows != 1:
+            logging.warning('failed update by primary key: affected rows: {}'.format(rows))
+
+    async def remove(self):
+        args = [self.get_value(self.__primary_key__)]
+        rows = await execute(self.__delete__, args)
+        if rows != 1:
+            logging.warning('failed remove by primary key, affected rows: {}'.format(rows))
