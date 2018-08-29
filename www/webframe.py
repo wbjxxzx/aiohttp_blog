@@ -40,6 +40,7 @@ def post(path):
     return decorator
 
 def get_required_kw_args(fn):
+    ''' 将所有无默认值的命名关键字参数作为一个tuple 返回 '''
     args = []
     params = inspect.signature(fn).parameters
     for name, param in params.items():
@@ -49,6 +50,7 @@ def get_required_kw_args(fn):
     return tuple(args)
 
 def get_named_kw_args(fn):
+    ''' 将所有的命名关键字参数作为一个tuple 返回 '''
     args = []
     params = inspect.signature(fn).parameters
     for name, param in params.items():
@@ -57,18 +59,23 @@ def get_named_kw_args(fn):
     return tuple(args)
 
 def has_named_kw_args(fn):
+    ''' 检查是否有命名关键字参数 '''
     params = inspect.signature(fn).parameters
     for name, param in params.items():
         if param.kind == inspect.Parameter.KEYWORD_ONLY:
             return True
 
 def has_var_kw_arg(fn):
+    ''' 检查是否有关键字参数集 '''
     params = inspect.signature(fn).parameters
     for name, param in params:
         if param.kind == inspect.Parameter.VAR_KEYWORD:
             return True
 
 def has_request_arg(fn):
+    '''
+    检查函数是否有 request 参数，若有，判断是否为最后一个参数
+    '''
     sig = inspect.signature(fn)
     params = sig.parameters
     found = False
@@ -76,6 +83,7 @@ def has_request_arg(fn):
         if name == 'request':
             found = True
             continue
+        # 找到 'request' 后，还出现位置参数，则抛出异常
         if found and(
             param.kind != inspect.Parameter.VAR_POSITIONAL and
             param.kind != inspect.Parameter.KEYWORD_ONLY and
@@ -86,6 +94,7 @@ def has_request_arg(fn):
     return found
 
 class RequestHandler(object):
+    ''' 封闭url处理函数 '''
     def __init__(self, app, fn):
         self._app = app
         self._func = fn
@@ -97,6 +106,7 @@ class RequestHandler(object):
 
     async def __call__(self, request):
         kw = None
+        # 当传入的处理函数具有 关键字参数集 或 命名关键字参数 或 request参数
         if self._has_var_kw_arg or self._has_named_kw_args or self._required_kw_args:
             if request.method == 'POST':
                 if not request.content_type:
@@ -108,13 +118,16 @@ class RequestHandler(object):
                         return web.HTTPBadRequest('JSON body must be object')
                     kw = params
                 elif ct.startswith(('application/x-www-form-urlencoded', 'multipart/form-data')):
+                    # 处理表单类型的数据，传入参数字典中
                     params = await request.post()
                     kw = dict(**params)
                 else:
+                    # 暂不支持处理其他正文类型的数据
                     return web.HTTPBadRequest('unsupported content-type: {}'.format(request.content_type))
             if request.method == 'GET':
                 qs = request.query_string
                 if qs:
+                    # 获取URL中的请求参数，如 id=1
                     kw = dict()
                     for k, v in parse.parse_qs(qs, True).items():
                         kw[k] = v[0]
@@ -137,22 +150,26 @@ class RequestHandler(object):
             kw['request'] = request
         # check required kw:
         if self._required_kw_args:
+            # 收集无默认值的关键字参数
             for name in self._required_kw_args:
                 if not name in kw:
                     return web.HTTPBadRequest('missing argument: {}'.format(name))
         logging.warning('call with args: {}'.format(kw))
         try:
+            # 最后调用处理函数，并传入请求参数，进行请求处理
             r = await self._func(**kw)
             return r
         except APIError as e:
             return dict(error=e.error, data=e.data, message=e.message)
 
 def add_static(app):
+    ''' 添加静态资源路径 '''
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
     app.router.add_static('/static/', path)
     logging.info('add static {}=>{}'.format('/static/', path))
 
 def add_route(app, fn):
+    ''' 注册处理函数到web服务器的路由 '''
     method = getattr(fn, '__method__', None)
     path = getattr(fn, '__route__', None)
     if path is None or method is None:
@@ -165,13 +182,16 @@ def add_route(app, fn):
     app.router.add_route(method, path, RequestHandler(app, fn))
 
 def add_routes(app, module_name):
+    ''' 自动注册符合条件的函数 '''
     n = module_name.rfind('.')
     if n == -1:
         mod = __import__(module_name, globals(), locals())
     else:
+        # 模块名，如 os.path 中的 path
         name = module_name[n+1:]
         mod = getattr(__import__(module_name[:n], globals(), locals()))
     for attr in dir(mod):
+        # 模块所有属性，忽略私有
         if attr.startswith('_'):
             continue
         fn = getattr(mod, attr)
@@ -179,4 +199,5 @@ def add_routes(app, module_name):
             method = getattr(fn, '__medthod__', None)
             path = getattr(fn, '__path__', None)
             if method and path:
+                # 已经处理过的url函数注册到web服务器
                 add_route(app, fn)
