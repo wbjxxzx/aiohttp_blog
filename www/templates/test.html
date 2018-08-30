@@ -1,0 +1,14 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>test users - aiohttp_blog</title>
+
+    </head>
+    <body>
+        <h1>All users</h1>
+        {% for user in users %}
+        <p>{{ user.name }} / {{ user.email }}</p>
+        {% endfor %}
+    </body>
+</html>
