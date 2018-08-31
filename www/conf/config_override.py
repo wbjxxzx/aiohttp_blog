@@ -6,6 +6,6 @@ __author__ = wbjxxzx
 
 configs = {
     'db': {
-        'host': '192.168.100.8'
+        'host': '127.0.0.1'
     }
 }

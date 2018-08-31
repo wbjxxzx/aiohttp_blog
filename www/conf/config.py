@@ -3,7 +3,7 @@
 '''
 __author__ = wbjxxzx
 '''
-import config_develop
+from . import config_develop
 
 class MyDict(dict):
     """
@@ -44,7 +44,7 @@ def to_mydict(d):
 
 configs = config_develop.configs
 try:
-    import config_override
+    from . import config_override
     configs = merge(configs, config_override.configs)
 except ImportError:
     pass
