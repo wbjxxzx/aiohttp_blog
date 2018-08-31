@@ -68,7 +68,7 @@ def has_named_kw_args(fn):
 def has_var_kw_arg(fn):
     ''' 检查是否有关键字参数集 '''
     params = inspect.signature(fn).parameters
-    for name, param in params:
+    for name, param in params.items():
         if param.kind == inspect.Parameter.VAR_KEYWORD:
             return True
 
@@ -183,21 +183,23 @@ def add_route(app, fn):
 
 def add_routes(app, module_name):
     ''' 自动注册符合条件的函数 '''
+    logging.debug('add url handlers {}...'.format(module_name))
     n = module_name.rfind('.')
     if n == -1:
         mod = __import__(module_name, globals(), locals())
     else:
         # 模块名，如 os.path 中的 path
         name = module_name[n+1:]
-        mod = getattr(__import__(module_name[:n], globals(), locals()))
+        mod = getattr(__import__(module_name[:n], globals(), locals(), [name]), name)
     for attr in dir(mod):
         # 模块所有属性，忽略私有
         if attr.startswith('_'):
             continue
         fn = getattr(mod, attr)
         if callable(fn):
-            method = getattr(fn, '__medthod__', None)
-            path = getattr(fn, '__path__', None)
+            method = getattr(fn, '__method__', None)
+            path = getattr(fn, '__route__', None)
             if method and path:
                 # 已经处理过的url函数注册到web服务器
+                logging.debug('find handler function: {}'.format(fn))
                 add_route(app, fn)

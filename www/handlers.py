@@ -20,3 +20,7 @@ async def index(request):
         '__template__': 'test.html',
         'users': users
     }
+
+@get('/hello')
+def hello(request):
+    return '<h1>Hello world</h1>'

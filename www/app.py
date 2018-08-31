@@ -10,11 +10,13 @@ import json
 import time
 from datetime import datetime
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+from conf.config import configs
 
 import orm
 from webframe import add_routes, add_static
 from jinja2 import Environment, FileSystemLoader
+from urllib import parse
 
 def init_jinja2(app, **kw):
     logging.info('init jinja2 ...')
@@ -52,7 +54,11 @@ async def data_factory(app, handler):
                 logging.info('request json: {}'.format(request.__data__))
             elif request.content_type.startswith('application/x-www-form-urlencoded'):
                 request.__data__ = await request.post()
-                logging.info('request form: {}'.format(requeset.__data__))
+                logging.info('request form: {}'.format(request.__data__))
+        elif request.method == 'GET':
+            qs = request.query_string
+            request.__data__ = {k: v[0] for k, v in parse.parse_qs(qs, True).items()}
+            logging.info('request query: {}'.format(request.__data__))
         return (await handler(request))
     return parse_data
 
@@ -84,7 +90,7 @@ async def response_factory(app, handler):
                 resp = web.Response(body=app['__templating__'].get_template(template).render(**r).encode('utf-8'))
                 resp.content_type = 'text/html;charset=utf-8'
                 return resp
-        if isinstance(r, int) and r >= 100 and r < 600:
+        if isinstance(r, int) and (r >= 100 and r < 600):
             return web.Response(r)
         if isinstance(r, tuple) and len(r) == 2:
             t, m = r
@@ -106,13 +112,14 @@ def datetime_filter(t):
         return '{}hours ago'.format(delta // 3600)
     if delta < 86400 * 7:
         return '{}days ago'.format(delta // 86400)
-    dt = datetime.formtimestamp(t)
+    dt = datetime.fromtimestamp(t)
     return '{}-{}-{}'.format(dt.year, dt.month, dt.day)
 
 async def init(loop):
-    await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='admin', password='123456', db='myblog')
+    # await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='admin', password='123456', db='myblog')
+    await orm.create_pool(loop=loop, **configs.db)
     app = web.Application(loop=loop, middlewares=[
-        logger_factory, response_factory
+        logger_factory, data_factory, response_factory
     ])
     init_jinja2(app, filters={'datetime': datetime_filter})
     add_routes(app, 'handlers')
