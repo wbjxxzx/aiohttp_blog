@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        {% block meta %} {% endblock %}
+        <title>
+            {% block title %} {% endblock %} aiohttp
+        </title>
+        {% block beforehead %} {% endblock %}
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-8"></div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div>
+                    <p>Powered by <a href="#">aiohttp</a>. Copyrght &copy;
+                    [<a href="/manage" target="_blank">Manage</a>]
+                </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

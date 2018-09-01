@@ -1,0 +1,82 @@
+{% extends '__base__.html' %}
+
+{% block title %}注册{% endblock %}
+
+{% block beforehead %}
+<script>
+function validateEmail(email){
+    var re = /^[a-zA-Z0-9\.\-\_]+\@[a-zA-Z0-9\-\_]+(\.[a-zA-Z0-9\-\_]+){1,4}$/;
+    return re.test(email)
+}
+$(document).ready(function(){
+    var vm = new Vue({
+        el: '#register-form',
+        data: {
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: ''
+        },
+        methods: {
+            submit: function(event){
+                event.preventDefault();
+                var $form = $('#register-form');
+                if(! this.name.trim()){
+                    return $form.showFormError('请输入名字');
+                }
+                if(! validateEmail(this.email.trim())){
+                    return $form.showFormError('请输入正确的Email地址');
+                }
+                if(this.password.length < 6){
+                    return $form.showFormError('口令长度至少为6个字符');
+                }
+                if(this.password !== this.confirmPassword){
+                    return $form.showFormError('两次输入的口令不一致');
+                }
+                var email = this.email.trim();
+                $form.postJSON('/api/users', {
+                    name: this.name.trim(),
+                    email: email,
+                    passwd: CryptoJS.SHA1(email + ':' + this.password).toString()
+                }, function(err, r){
+                    if(err){
+                        return $form.showFormError(err);
+                    }
+                    return localtion.assign('/');
+                });
+            }
+        }
+    });
+    $('register-form').show();
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="">
+    <h1>欢迎注册！</h1>
+    <form id="register-form" v-on="submit: submit" class="">
+        <div class=""></div>
+        <div class="form-group">
+            <label class="control-label">名字</label>
+            <input v-model="name" type="text" maxlength="50" placeholder="名字" class="">
+        </div>
+        <div class="form-group">
+            <label class="control-label">Email</label>
+            <input v-model="name" type="text" maxlength="50" placeholder="example@example.com" class="">
+        </div>
+        <div class="form-group">
+            <label class="control-label">口令</label>
+            <input v-model="password" type="password" maxlength="50" placeholder="口令" class="">
+        </div>
+        <div class="form-group">
+            <label class="control-label">重复口令</label>
+            <input v-model="confirmPassword" type="password" maxlength="50" placeholder="口令" class="">
+        </div>
+        <div class="form-group">
+            <input type="reset" class="btn btn-default" value="重置">
+            <button type="submit" class="btn btn-primary"><i></i>注册</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
