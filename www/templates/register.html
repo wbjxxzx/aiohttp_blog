@@ -53,29 +53,39 @@ $(document).ready(function(){
 {% endblock %}
 
 {% block content %}
-<div class="">
+<div class="container">
     <h1>欢迎注册！</h1>
-    <form id="register-form" v-on="submit: submit" class="">
-        <div class=""></div>
+    <div class="hr-line-dashed"></div>
+    <form id="register-form" v-on="submit: submit" class="form-horizontal">
         <div class="form-group">
-            <label class="control-label">名字</label>
-            <input v-model="name" type="text" maxlength="50" placeholder="名字" class="">
+            <label class="col-sm-2 control-label">名字</label>
+            <div class="col-sm-6">
+                <input class="form-control" autocomplete="off" v-model="name" type="text" maxlength="50" placeholder="名字" >
+            </div>
         </div>
         <div class="form-group">
-            <label class="control-label">Email</label>
-            <input v-model="name" type="text" maxlength="50" placeholder="example@example.com" class="">
+            <label class="col-sm-2 control-label">Email</label>
+            <div class="col-sm-6">
+                <input class="form-control" v-model="name" type="text" maxlength="50" placeholder="example@example.com" >
+            </div>
         </div>
         <div class="form-group">
-            <label class="control-label">口令</label>
-            <input v-model="password" type="password" maxlength="50" placeholder="口令" class="">
+            <label class="col-sm-2 control-label">口令</label>
+            <div class="col-sm-6">
+                <input class="form-control" v-model="password" type="password" maxlength="50" placeholder="口令" >
+            </div>
         </div>
         <div class="form-group">
-            <label class="control-label">重复口令</label>
-            <input v-model="confirmPassword" type="password" maxlength="50" placeholder="口令" class="">
+            <label class="col-sm-2 control-label">重复口令</label>
+            <div class="col-sm-6">
+                <input class="form-control" v-model="confirmPassword" type="password" maxlength="50" placeholder="口令" >
+            </div>
         </div>
         <div class="form-group">
-            <input type="reset" class="btn btn-default" value="重置">
-            <button type="submit" class="btn btn-primary"><i></i>注册</button>
+            <div class="col-sm-offset-2">
+                <input type="reset" class="btn btn-default" value="重置">
+                <button type="submit" class="btn btn-primary"><i></i>注册</button>
+            </div>
         </div>
     </form>
 </div>
