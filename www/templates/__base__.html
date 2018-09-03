@@ -6,28 +6,79 @@
         <title>
             {% block title %} {% endblock %} aiohttp
         </title>
+        <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+        <script src="/static/js/jquery-3.1.1.min.js"></script>
+        <script src="/static/js/bootstrap.min.js"></script>
         {% block beforehead %} {% endblock %}
+        <style>
+            body { 
+                padding-top: 70px; 
+                padding-bottom: 70px;
+            }
+        </style>
     </head>
     <body>
-        <div class="container">
-            <div class="row">
-                <div class="col-xs-8"></div>
+        <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container-fluid"> 
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse"
+                            data-target="#blog-navbar-collapse">
+                        <span class="sr-only">切换导航</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">BLOG</a>
+                    
+                </div>
+                <div class="collapse navbar-collapse" id="blog-navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li class="active"><a href="#">日志</a></li>
+                        <li class="dropdown">
+                            <!-- <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    教程 <b class="caret"></b>
+                            </a> -->
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" 
+                            aria-haspopup="true" aria-expanded="false">教程 <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">javascript</a></li>
+                                <li><a href="#">bootstrap</a></li>
+                                <li><a href="#">jquery</a></li>
+                                <li class="divider"></li>
+                                <li><a href="#">ansible</a></li>
+                                <li class="divider"></li>
+                                <li><a href="#">django</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <form class="navbar-form navbar-left" role="search">
+                        <div class="form-group">
+                            <input type="text" class="form-control" placeholder="Search">
+                        </div>
+                        <button type="submit" class="btn btn-default">搜索</button>
+                    </form>
+                    <ul class="nav navbar-nav navbar-right"> 
+                        <li><a href="/register"><span class="glyphicon glyphicon-user"></span> 注册</a></li> 
+                        <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> 登录</a></li> 
+                    </ul> 
+                </div>
             </div>
-        </div>
+        </nav>
+        
         <div class="container">
             <div class="row">
                 {% block content %}
                 {% endblock %}
             </div>
         </div>
-        <div class="container">
-            <div class="row">
-                <div>
+        <footer>
+            <nav class="navbar navbar-default navbar-fixed-bottom">
+                <div class="text-center">
                     <p>Powered by <a href="#">aiohttp</a>. Copyrght &copy;
-                    [<a href="/manage" target="_blank">Manage</a>]
-                </p>
+                        [<a href="/manage" target="_blank">Manage</a>]
+                    </p>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </nav>
+        </footer>
     </body>
 </html>
