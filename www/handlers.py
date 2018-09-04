@@ -10,6 +10,7 @@ import json
 import hashlib
 import base64
 import asyncio
+import logging
 from aiohttp import web
 from webframe import get, post
 from models import User, Comment, Blog, next_id
@@ -29,7 +30,7 @@ async def api_register_user(*, email, name, passwd):
         raise APIValueError('passwd')
     users = await User.find_all('email=?', [email])
     if len(users) > 0:
-        raise APIValueError('register: failed', 'email', 'Email is already in use.')
+        raise APIValueError('register: failed', 'Email is already in use.')
     uid = next_id()
     sha1_passwd = '{}:{}'.format(uid, passwd)
     user = User(id=uid, name=name.strip(), email=email,
@@ -83,6 +84,30 @@ async def cookie2user(cookie_str):
     except Exception as e:
         logging.exception(e)
         return None
+
+@post('/api/authenticate')
+def authenticate(*, email, passwd):
+    if not email:
+        raise APIValueError('email', 'Invalid email')
+    if not passwd:
+        raise APIValueError('passwd', 'Invalid passwd.')
+    users = await User.find_all('email=?', [email])
+    if len(users) == 0:
+        raise APIValueError('email', 'Email not exists.')
+    user = users[0]
+    sha1 = hashlib.sha1()
+    sha1.update(user.id.encode('utf-8'))
+    sha1.update(b':')
+    sha1.update(passwd.encode('utf-8'))
+    if user.passwd != sha1.hexdigest():
+        raise APIValueError('passwd', 'Invalid passwd.')
+    # authenticate ok, set cookie
+    r = web.Response()
+    r.set_cookie(COOKIE_NAME, user2cookie(user, 86400), max_age=86400, httponly=True)
+    user.passwd = '******'
+    r.content_type = 'application/json'
+    r.body = json.dumps(user, ensure_ascii=False).encode('utf-8')
+    return r
 
 @get('/register')
 def register():
