@@ -1,0 +1,94 @@
+{% extends '__base__.html' %}
+
+{% block title %}日志{% endblock %}
+
+{% block beforehead %}
+<script>
+function initVM(data){
+    var vm = new Vue({
+        el: '#vm',
+        data: {
+            blogs: data.blogs,
+            page: data.page
+        },
+        methods: {
+            edit_blog: function(blog){
+                location.assign('/manage/blogs/edit?id=' + blog.id);
+            },
+            delete_blog: function(blog){
+                if(confirm('确认要删除"' + blog.name + '"?删除后不可恢复!')){
+                    postJSON('/api/blogs/' + blog.id + '/delete', function(err, r){
+                        if(err){
+                            return alert(err.message || err.error || err);
+                        }
+                        refresh();
+                    });
+                }
+            }
+        }
+    });
+    $('#vm').show();
+}
+$(document).ready(function(){
+    getJSON('/api/blogs', {
+        page: {{ page_index }}
+    }, function(err, results){
+        if(err){
+            return fatal(err);
+        }
+        $('#loading').hide();
+        initVM(results);
+    });
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="">
+        <ul class="breadcrumb">
+            <li><a href="/manage/comments">评论</a></li>
+            <li><a href="/manage/blogs">日志</a></li>
+            <li><a href="/manage/users">用户</a></li>
+        </ul>
+    </div>
+</div>
+
+<div id="error"></div>
+<div id="loading" class="text-center">
+    加载中。。。
+</div>
+<div id="vm">
+    <a href="/manage/blogs/create" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i>新日志</a>
+    <table class="">
+        <thead>
+            <tr>
+                <th class="">标题/摘要</th>
+                <th class="">作者</th>
+                <th class="">创建时间</th>
+                <th class="">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="blog in blogs">
+                <td>
+                    <a target="_blank" :href="'/blog/' + blog.id">{{ blog.name }}</a>
+                </td>
+                <td>
+                    <a target="_blank" :href="'/user/' + blog.user_id">{{ blog.user_name }}</a>
+                </td>
+                <td>
+                    <span>{{ blog.created_at.toDateTime() }}</span>
+                </td>
+                <td>
+                    <a target="#0" @click="edit_blog(blog)"><i class="glyphicon glyphicon-edit"></i></a>
+                    <a target="#0" @click="delete_blog(blog)"><i class="glyphicon glyphicon-trash"></i></a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div></div>
+</div>
+{% endblock %}

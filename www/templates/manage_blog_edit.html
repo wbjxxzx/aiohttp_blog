@@ -1,0 +1,97 @@
+{% extends '__base__.html' %}
+
+{% block titme %}编辑日志{% endblock %}
+
+{% block beforehead %}
+<script>
+var id = '{{id}}',
+    action = '{{action}}';
+function initVM(blog){
+    var vm = new Vue({
+        el: '#vm',
+        data: blog,
+        methods:{
+            submit: function(event){
+                event.preventDefault();
+                var $form = $('#vm').find('form');
+                $form.postJSON(action, this.$data, function(err,r){
+                    if(err){
+                        $form.showFormError(err);
+                    }else{
+                        return location.assign('/api/blogs/' + r.id);
+                    }
+                });
+            }
+        }
+    });
+    $('#vm').show();
+}
+$(document).ready(function(){
+    if(id){
+        getJSON('/api/blogs/' + id, function(err, blog){
+            if(err){
+                return fatal(err);
+            }
+            $('#loading').hide();
+            initVM(blog);
+        })
+    }else{
+        $('#loading').hide();
+        initVM({
+            name: '',
+            summary: '',
+            content: ''
+        });
+    }
+})
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="">
+        <ul class="breadcrumb">
+            <li><a href="/manage/comments">评论</a></li>
+            <li><a href="/manage/blogs">日志</a></li>
+            <li><a href="/manage/users">用户</a></li>
+        </ul>
+    </div>
+</div>
+<div id="error"></div>
+<div id="loading" class="text-center">
+
+</div>
+
+<div id="vm" >
+    <form v-on="submit: submit" class="form-horizontal">
+        <div class="hidden"></div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">标题:</label>
+            <div class="col-sm-6">
+                <input class="from-control" v-model="name" name="name" type="text" placeholder="标题" autocomplete="off">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">摘要:</label>
+            <div class="col-sm-6">
+                <!-- <input class="form-control" v-model="name" name="name" type="text" placeholder="标题" autocomplete="off"> -->
+                <textarea class="form-control" v-model="summary" name="summary" placeholder="摘要" style="resize: none;" rows="4"></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">内容:</label>
+            <div class="col-sm-6">
+                <!-- <input class="from-control" v-model="content" name="content"\ placeholder="标题" autocomplete="off"> -->
+                <textarea class="form-control" v-model="content" name="content" placeholder="内容" style="resize: none;" rows="16"></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-2">
+            <button type="submit" class="btn btn-primary"></button>
+            <a href="/manage/blogs" class="btn btn-default">
+                <i class="">取消</i>
+            </a>
+        </div>
+        </div>
+    </form>
+</div>
