@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>
+            登录 aiohttp
+        </title>
+        <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+        <script src="/static/js/jquery-3.1.1.min.js"></script>
+        <script src="/static/js/bootstrap.min.js"></script>
+        <script src="/static/js/vue.min.js"></script>
+        <style>
+            body { 
+                padding-top: 70px; 
+                padding-bottom: 70px;
+            }
+        </style>
+        
+    </head>
+    <body>
+        <div class="container">
+
+        <form id="vm-auth" v-on:submit="submit" class="form-horizontal">
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="email">邮箱</label>
+                <div class="col-sm-4">
+                    <input class="form-control" id="email" name="email" v-model="email" type="text" placeholder="电子邮件" maxlength="50" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="passwd">密码</label>
+                <div class="col-sm-4">
+                    <input class="form-control" id="passwd" name="passwd" v-model="passwd" type="password" axlength="50" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-4">
+                    <button class="btn btn-primary" type="submit">登录</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    // $(document).ready(function(){
+        var vmAuth = new Vue({
+            el: '#vm-auth',
+            data: {
+                email: '',
+                passwd: ''
+            },
+            methods: {
+                submit: function(event){
+                    event.preventDefault();
+                    var
+                        $form = $('#vm-auth'),
+                        email = this.email.trim(),
+                        data = {
+                            email: email,
+                            passwd: this.passwd === '' ? '' : CryptoJS.SHA1(email + ':' + this.passwd).toString()
+                        };
+                    $form.postJSON('/api/authenticate', data, function(err, r){
+                        if(! err){
+                            location.assign('/');
+                        }
+                    });
+                }
+            }
+        });
+    // });
+        </script>
+    </body>
+</html>
