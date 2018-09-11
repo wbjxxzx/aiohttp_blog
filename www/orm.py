@@ -6,14 +6,13 @@ __author__ = wbjxxzx
 
 import asyncio
 import aiomysql
-import logging
-logging.basicConfig(level=logging.INFO)
+from mylogger import logger
 
 def logsql(sql, args=()):
-    logging.info('SQL: {}'.format(sql))
+    logger.info('SQL: {}'.format(sql))
 
 async def create_pool(loop, **kw):
-    logging.info('create database connecton pool...')
+    logger.info('create database connecton pool...')
     global __pool
     __pool = await aiomysql.create_pool(
         host = kw.get('host', 'localhost'),
@@ -38,7 +37,7 @@ async def select(sql, args, size=None):
                 rs = await cur.fetchmany(size)
             else:
                 rs = await cur.fetchall()
-        logging.info('rows returned: {}'.format(len(rs)))
+        logger.info('rows returned: {}'.format(len(rs)))
         return rs
 
 async def execute(sql, args, autocommit=True):
@@ -101,14 +100,14 @@ class ModelMetaclass(type):
             return type.__new__(cls, name, bases, attrs)
         # get table name
         table_name = attrs.get('__table__', None) or name
-        logging.info('found model: {} (table: {})'.format(name, table_name))
+        logger.info('found model: {} (table: {})'.format(name, table_name))
         # all Field and primary name
         mappings = {}
         fields = []
         primarykey = None
         for k, v in attrs.items():
             if isinstance(v, Field):
-                logging.info('  found mapping: {} ==> {}'.format(k, v))
+                logger.info('  found mapping: {} ==> {}'.format(k, v))
                 mappings[k] = v
                 if v.primary_key:
                     # found primary
@@ -160,7 +159,7 @@ class Model(dict, metaclass=ModelMetaclass):
             field = self.__mappings__[key]
             if field.default is not None:
                 val = field.default() if callable(field.default) else field.default
-                logging.debug('using default value for {}:{}'.format(key, str(val)))
+                logger.debug('using default value for {}:{}'.format(key, str(val)))
                 setattr(self, key, val)
         return val
 
@@ -216,17 +215,17 @@ class Model(dict, metaclass=ModelMetaclass):
         args.append(self.get_value_or_default(self.__primary_key__))
         rows = await execute(self.__insert__, args)
         if rows != 1:
-            logging.warning('failed insert record: affected rows: {}'.format(row))
+            logger.warning('failed insert record: affected rows: {}'.format(row))
 
     async def update(self):
         args = list(map(self.get_value, self.__fields__))
         args.append(self.get_value(self.__primary_key__))
         rows = await execute(self.__update__, args)
         if rows != 1:
-            logging.warning('failed update by primary key: affected rows: {}'.format(rows))
+            logger.warning('failed update by primary key: affected rows: {}'.format(rows))
 
     async def remove(self):
         args = [self.get_value(self.__primary_key__)]
         rows = await execute(self.__delete__, args)
         if rows != 1:
-            logging.warning('failed remove by primary key, affected rows: {}'.format(rows))
+            logger.warning('failed remove by primary key, affected rows: {}'.format(rows))

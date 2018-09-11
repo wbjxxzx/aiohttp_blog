@@ -7,6 +7,7 @@ __author__ = wbjxxzx
 import time
 import uuid
 from orm import Model, StringField, BooleanField, FloatField, TextField
+from mylogger import logger
 
 def next_id():
     return '{:015d}{}000'.format(int(time.time()*1000), uuid.uuid4().hex)

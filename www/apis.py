@@ -7,7 +7,7 @@ __author__ = wbjxxzx
 import json
 import inspect
 import functools
-import logging
+from mylogger import logger
 
 class APIError(Exception):
     """

@@ -10,7 +10,7 @@ import json
 import hashlib
 import base64
 import asyncio
-import logging
+from mylogger import logger
 from aiohttp import web
 from webframe import get, post
 from models import User, Comment, Blog, next_id
@@ -90,12 +90,12 @@ async def cookie2user(cookie_str):
             return None
         s = '{}-{}-{}-{}'.format(uid, user.passwd, expires, _COOKIE_KEY)
         if sha1 != hashlib.sha1(s.encode('utf-8')).hexdigest():
-            logging.info('invalid sha1')
+            logger.info('invalid sha1')
             return None
         user.passwd = '******'
         return user
     except Exception as e:
-        logging.exception(e)
+        logger.exception(e)
         return None
 
 @post('/api/authenticate')
@@ -139,7 +139,7 @@ def signout(request):
     referer = request.headers.get('Referer')
     r = web.HTTPFound(referer or '/')
     r.set_cookie(COOKIE_NAME, '-deleted-', max_age=0, httponly=True)
-    logging.info('user signed out.')
+    logger.info('user signed out.')
     return r
 
 @get('/api/users')

@@ -9,8 +9,7 @@ import os
 import json
 import time
 from datetime import datetime
-import logging
-logging.basicConfig(level=logging.DEBUG)
+from mylogger import logger
 from conf.config import configs
 
 import orm
@@ -19,8 +18,9 @@ from jinja2 import Environment, FileSystemLoader
 from urllib import parse
 from handlers import cookie2user, COOKIE_NAME
 
+
 def init_jinja2(app, **kw):
-    logging.info('init jinja2 ...')
+    logger.info('init jinja2 ...')
     options = {
         'autoescape': kw.get('autoescape', True),
         'block_start_string': kw.get('block_start_string', '{%'),
@@ -32,7 +32,7 @@ def init_jinja2(app, **kw):
     path = kw.get('path', None)
     if path is None:
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
-    logging.info('set jinja2 template path: {}'.format(path))
+    logger.info('set jinja2 template path: {}'.format(path))
     env = Environment(loader=FileSystemLoader(path), **options)
     filters = kw.get('filters', None)
     if filters is not None:
@@ -42,7 +42,7 @@ def init_jinja2(app, **kw):
 
 async def logger_factory(app, handler):
     async def logger(request):
-        logging.info('Request: {} {}'.format(request.method, request.path))
+        logger.info('Request: {} {}'.format(request.method, request.path))
         # await asyncio.sleep(0.3)
         return (await handler(request))
     return logger
@@ -52,20 +52,20 @@ async def data_factory(app, handler):
         if request.method == 'POST':
             if request.content_type.startswith('application/json'):
                 request.__data__ = await request.json()
-                logging.info('request json: {}'.format(request.__data__))
+                logger.info('request json: {}'.format(request.__data__))
             elif request.content_type.startswith('application/x-www-form-urlencoded'):
                 request.__data__ = await request.post()
-                logging.info('request form: {}'.format(request.__data__))
+                logger.info('request form: {}'.format(request.__data__))
         elif request.method == 'GET':
             qs = request.query_string
             request.__data__ = {k: v[0] for k, v in parse.parse_qs(qs, True).items()}
-            logging.info('request query: {}'.format(request.__data__))
+            logger.info('request query: {}'.format(request.__data__))
         return (await handler(request))
     return parse_data
 
 async def response_factory(app, handler):
     async def response(request):
-        logging.info('Response handler...')
+        logger.info('Response handler...')
         r = await handler(request)
         if isinstance(r, web.StreamResponse):
             return r
@@ -106,13 +106,13 @@ async def response_factory(app, handler):
 async def auth_factory(app, handler):
     async def auth(request):
         ''' 分析COOKIE, 将登录用户绑定到request对象 '''
-        logging.info('check user: {} {}'.format(request.method, request.path))
+        logger.info('check user: {} {}'.format(request.method, request.path))
         request.__user__ = None
         cookie_str = request.cookies.get(COOKIE_NAME)
         if cookie_str:
             user = await cookie2user(cookie_str)
             if user:
-                logging.info('set current user: {}'.format(user.email))
+                logger.info('set current user: {}'.format(user.email))
                 request.__user__ = user 
         if request.path.startswith('/manage/') and (request.__user__ is None or not request.__user__.admin):
             return web.HTTPFound('/signin')
@@ -142,7 +142,7 @@ async def init(loop):
     add_routes(app, 'handlers')
     add_static(app)
     srv = await loop.create_server(app.make_handler(), '127.0.0.1', 8000)
-    logging.info('server started at http://127.0.0.1:8000...')
+    logger.info('server started at http://127.0.0.1:8000...')
     return srv
 
 loop = asyncio.get_event_loop()

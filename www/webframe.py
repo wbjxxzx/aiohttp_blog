@@ -11,7 +11,7 @@ import functools
 from urllib import parse
 from aiohttp import web
 from apis import APIError
-import logging
+from mylogger import logger
 
 def get(path):
     """
@@ -144,7 +144,7 @@ class RequestHandler(object):
             # check named arg:
             for k, v in request.match_info.items():
                 if k in kw:
-                    logging.warning('duplicat arg name in named arg and kw args: {}'.format(k))
+                    logger.warning('duplicat arg name in named arg and kw args: {}'.format(k))
                     kw[k] = v
         if self._has_request_arg:
             kw['request'] = request
@@ -154,7 +154,7 @@ class RequestHandler(object):
             for name in self._required_kw_args:
                 if not name in kw:
                     return web.HTTPBadRequest('missing argument: {}'.format(name))
-        logging.warning('call with args: {}'.format(kw))
+        logger.warning('call with args: {}'.format(kw))
         try:
             # 最后调用处理函数，并传入请求参数，进行请求处理
             r = await self._func(**kw)
@@ -166,7 +166,7 @@ def add_static(app):
     ''' 添加静态资源路径 '''
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
     app.router.add_static('/static/', path)
-    logging.info('add static {}=>{}'.format('/static/', path))
+    logger.info('add static {}=>{}'.format('/static/', path))
 
 def add_route(app, fn):
     ''' 注册处理函数到web服务器的路由 '''
@@ -176,14 +176,14 @@ def add_route(app, fn):
         raise ValueError('@get or @post not defined in {}'.format(fn))
     if not asyncio.iscoroutinefunction(fn) and not inspect.isgeneratorfunction(fn):
         fn = asyncio.coroutine(fn)
-    logging.info('add route {} {}=>{}({})'.format(method, path, fn.__name__, 
+    logger.info('add route {} {}=>{}({})'.format(method, path, fn.__name__, 
         ', '.join(inspect.signature(fn).parameters.keys()))
     )
     app.router.add_route(method, path, RequestHandler(app, fn))
 
 def add_routes(app, module_name):
     ''' 自动注册符合条件的函数 '''
-    logging.debug('add url handlers {}...'.format(module_name))
+    logger.debug('add url handlers {}...'.format(module_name))
     n = module_name.rfind('.')
     if n == -1:
         mod = __import__(module_name, globals(), locals())
@@ -201,5 +201,5 @@ def add_routes(app, module_name):
             path = getattr(fn, '__route__', None)
             if method and path:
                 # 已经处理过的url函数注册到web服务器
-                logging.debug('find handler function: {}'.format(fn))
+                logger.debug('find handler function: {}'.format(fn))
                 add_route(app, fn)
