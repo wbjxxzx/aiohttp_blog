@@ -4,6 +4,9 @@
 __author__ = wbjxxzx
 '''
 
-import logging, logging.config
-logging.config.fileConfig("conf/logging.conf")
+import logging
+import logging.config
+import os
+confpath = os.path.dirname(os.path.abspath(__file__))
+logging.config.fileConfig(os.path.join(confpath, "conf", "logging.conf"))
 logger = logging.getLogger("")
